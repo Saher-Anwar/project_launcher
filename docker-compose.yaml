@@ -1,0 +1,18 @@
+services:
+  crud:
+    container_name: crud
+    build: ./crud-service
+    ports: 
+      - "5000:5000"
+    volumes:
+      - ./crud-service/src:/app/src
+    command: ["nodemon", "src/main.js"]
+  
+  project-launcher:
+    container_name: project-launcher
+    build: ./project-launcher-service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./project-launcher-service/src:/app/src
+    command: ["nodemon", "src/main.js"]
