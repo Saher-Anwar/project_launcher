@@ -8,12 +8,30 @@ const databaseName = "development_db_for_project_launcher"
 const collectionName = "project_data";
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  readAllDocuments()
+  if(req.method == 'POST'){
+    let body = ''
+    req.on("data", chunk => {
+      body += chunk.toString();
+    })
+
+    req.on("end", () => writeToDb(res, body))
+  } 
+
+  if(req.method == 'GET'){
+    readAllDocuments().then(docs => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(docs));
+      }).catch(err => {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end("Error reading documents");
+      });
+  }
+
 });
 
 server.listen(PORT, () => {
   // Only called once -> when server is ready to accept requests
+  console.log(`Server running at http://localhost:${PORT}`);
 });
 
 async function readAllDocuments() {
@@ -31,6 +49,7 @@ async function readAllDocuments() {
 
     console.log("All documents:");
     console.log(results);
+    return results
   } catch (err) {
     console.error("Error:", err);
   } finally {
@@ -38,29 +57,25 @@ async function readAllDocuments() {
   }
 }
 
-async function write_to_db() {
+async function writeToDb(res, rawData) {
   try {
-    // Connect to the client
+    const data = JSON.parse(rawData); // parse JSON from request
+
+    // Insert into MongoDB
     await client.connect();
+    const db = client.db(databaseName);
+    const coll = db.collection(collectionName);
 
-    // Select database and collection
-    const database = client.db(databaseName);
-    const collection = database.collection(collectionName);
+    const result = await coll.insertOne(data);
 
-    // Document to insert
-    const doc = {
-      name: "Alice",
-      age: 25,
-      city: "Toronto"
-    };
-
-    // Insert document
-    const result = await collection.insertOne(doc);
-    console.log("Inserted document with _id:", result.insertedId);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ insertedId: result.insertedId }));
+    console.log("Inserted document:", result.insertedId);
   } catch (err) {
-    console.error("Error:", err);
+    console.error(err);
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end("Error inserting document");
   } finally {
-    // Always close the connection
     await client.close();
   }
 }
