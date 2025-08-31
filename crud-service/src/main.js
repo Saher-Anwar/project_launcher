@@ -1,13 +1,22 @@
-const http = require('http');
+import express from 'express';
 
 const PORT = 5000;
+const app = express();
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
 
-  // Temporary message so you can test edits
-  res.end('Hello from Docker! Timestamp: ' + new Date().toISOString());
+app.use(express.json());  //express middleware to read incoming request bodies
+
+
+app.post('/project-launcher', (req, res) => {
+  
+
 });
+
+
+
+
+
+
 
 server.listen(PORT, () => {
   console.log(`CRUD Service running at http://localhost:${PORT}`);
